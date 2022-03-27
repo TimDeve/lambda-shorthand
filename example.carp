@@ -1,0 +1,15 @@
+(load "lambda-shorthand.carp")
+
+(defndynamic add-5 [i]
+  ((: + :1 5) i))
+
+(defmacro add-9 [i]
+  (let [add-4 (: + :1 4)]
+   (add-4 (add-5 i))))
+
+(defn-do main []
+  (println* "17 = " (+ 4 (add-9 4)))
+  (println* "[6 12 18] = " &(endo-map &(: * 3 (* 2 :1)) [1 2 3]))
+  (println* "12 = " ((: do :12) 1 2 3 4 5 6 7 8 9 10 11 12))
+  (println* "threetwoone = " (reduce &(: append :2 &:1) @"" &[@"one" @"two" @"three"])))
+

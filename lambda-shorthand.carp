@@ -1,0 +1,77 @@
+(defmodule LambdaShorthand
+  ; (hidden max)
+  ; (private max)
+  (defndynamic max [a b]
+   (if (< a b) b a))
+
+  ; (hidden range-to)
+  ; (private range-to)
+  (defndynamic range-to [target]
+    (unreduce (curry + 1) 0 target (list)))
+
+  ; (hidden sym-from-num)
+  ; (private sym-from-num)
+  (defndynamic sym-from-num [num]
+    (Symbol.from (Dynamic.str gen "-lambda-shorthand-arg-n" num)))
+
+  ; (hidden gen-args)
+  ; (private gen-args)
+  (defndynamic gen-args [gen arg-num]
+    (collect-into
+      (map LambdaShorthand.sym-from-num (LambdaShorthand.range-to arg-num))
+      array))
+
+  ; (hidden str-is-number?)
+  ; (private str-is-number?)
+  (defndynamic str-is-number? [s]
+    (all? (fn [char] (number? (parse char)))
+      (String.to-list s)))
+
+  ; (hidden placeholder?)
+  ; (private placeholder?)
+  (defndynamic placeholder? [sym]
+    (all? (fn [f] (f sym))
+      '(symbol?
+        (fn [sy] (= (String.head (Symbol.str sy)) ":"))
+        (fn [sy] (not (String.empty? (String.tail (Symbol.str sy)))))
+        (fn [sy] (LambdaShorthand.str-is-number? (String.tail (Symbol.str sy)))))))
+
+  ; (hidden get-number-from-placeholder)
+  ; (private get-number-from-placeholder)
+  (defndynamic get-number-from-placeholder [sym]
+    (parse (String.tail (Symbol.str sym))))
+
+  ; (hidden find-highest-num)
+  ; (private find-highest-num)
+  (defndynamic find-highest-num [form]
+    (walk (fn [x]
+           (cond
+             (LambdaShorthand.placeholder? x)
+             (LambdaShorthand.get-number-from-placeholder x)
+             (list? x)
+             (LambdaShorthand.find-highest-num x)
+             0))
+          (fn [final-form] (reduce LambdaShorthand.max 0 final-form))
+          form))
+
+  ; (hidden transform)
+  ; (private transform)
+  (defndynamic transform [gen in]
+    (postwalk
+     (fn [x]
+      (if (LambdaShorthand.placeholder? x)
+        (let [num (LambdaShorthand.get-number-from-placeholder x)]
+          (LambdaShorthand.sym-from-num num))
+        x))
+     in))
+
+  (defndynamic shorthand [r]
+    (let [gen (gensym)
+          arg-num (LambdaShorthand.find-highest-num r)
+          body (LambdaShorthand.transform gen r)
+          args (LambdaShorthand.gen-args gen arg-num)]
+      `(fn %args %body))))
+
+(defmacro : [:rest r]
+  (LambdaShorthand.shorthand r))
+
