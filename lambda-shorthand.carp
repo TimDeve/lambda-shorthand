@@ -27,13 +27,20 @@
     (all? (fn [char] (number? (parse char)))
       (String.to-list s)))
 
+  ; (private not-lone-colon?)
+  (hidden not-lone-colon?)
+  (defndynamic not-lone-colon? [s]
+    (if (String.empty? (String.tail (Symbol.str sy)))
+      (macro-error "Lone `:` symbol found. Lambda shorthands are not allowed to be nested inside another.")
+      true))
+
   ; (private placeholder?)
   (hidden placeholder?)
   (defndynamic placeholder? [sym]
     (all? (fn [f] (f sym))
       '(symbol?
         (fn [sy] (= (String.head (Symbol.str sy)) ":"))
-        (fn [sy] (not (String.empty? (String.tail (Symbol.str sy)))))
+        (fn [sy] (LambdaShorthand.not-lone-colon? sy))
         (fn [sy] (LambdaShorthand.str-is-number? (String.tail (Symbol.str sy)))))))
 
   ; (private get-number-from-placeholder)
