@@ -10,7 +10,7 @@ position, `:1`, `:2`, etc...
 ## Example
 
 ```clojure
-(load "https://github.com/TimDeve/lambda-shorthand@master")
+(load "https://github.com/TimDeve/lambda-shorthand@v0.1.0")
 
 (defndynamic add-5 [i]
   ((: + :1 5) i))
